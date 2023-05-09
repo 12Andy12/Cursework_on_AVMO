@@ -24,6 +24,11 @@ public:
 
 	Rational admin = 0;
 	bool COinvalid = false;
+	bool OneInvalid = false;
+
+	bool solutionCompleted = false;
+
+	bool turnToOtherSimplex = false;
 
 	vector<int> basisId;
 	vector<double> Z;
@@ -96,6 +101,7 @@ public:
 		table[rowCount][0] = Z[0];
 		for (int i = 1; i < Z.size(); ++i)
 			table[rowCount][i] = Z[i] * -1;
+
 	}
 
 	void initCO()
@@ -111,9 +117,75 @@ public:
 			table[rowCount + 1][i] = table[rowCount][i] / table[rowAdmin][i];
 		}
 	}
+	void initOtherCO()
+	{
+		for (int i = 0; i < rowCount; ++i)
+		{
+			table[i].resize(colCount + 1);
+			if (table[i][colAdmin] <= 0)
+			{
+				table[i][colCount] = 0;
+				continue;
+			}
+			table[i][colCount] = table[i][0] / table[i][colAdmin];
+		}
+	}
+
+	bool initOtherAdmin()
+	{
+		Rational min = 0;
+		int minID = -1;
+		for (int i = 1; i < colCount; ++i)
+		{
+			if (table[rowCount][i] < min && table[rowCount][i] < 0)
+			{
+				min = table[rowCount][i];
+				minID = i;
+			}
+		}
+		colAdmin = minID;
+		if (colAdmin == -1)
+		{
+			COinvalid = true;
+			for (int i = 0; i < rowCount; ++i)
+				table[i][colCount] = 0;
+			return false;
+		}
+
+		initOtherCO();
+
+		min = 100000;
+		minID = -1;
+		for (int i = 0; i < rowCount; ++i)
+		{
+			if (table[i][colCount] < min && table[i][colCount] > 0)
+			{
+				min = table[i][colCount];
+				minID = i;
+			}
+		}
+		rowAdmin = minID;
+
+		if (rowAdmin == -1)
+		{
+			COinvalid = true;
+			return false;
+		}
+
+		admin = table[rowAdmin][colAdmin];
+
+		return true;
+
+	}
 
 	bool initAdmin()
 	{
+		if (isOptimal() && !z_isGood())
+			turnToOtherSimplex = true;
+
+		if (turnToOtherSimplex)
+			return initOtherAdmin();
+
 		Rational min = 0;
 		int minID = -1;
 		for (int i = 0; i < rowCount; ++i)
@@ -137,7 +209,7 @@ public:
 		{
 			COinvalid = true;
 			for (int i = 1; i < colCount; ++i)
-			{	
+			{
 				table[rowCount + 1][i] = 0;
 			}
 			return false;
@@ -148,12 +220,13 @@ public:
 		minID = -1;
 		for (int i = 1; i < colCount; ++i)
 		{
-			if (table[rowCount + 1][i] < min && table[rowCount+1][i] < 0)
+			if (abs(table[rowCount + 1][i]) < min && table[rowCount + 1][i] < 0)
 			{
-				min = table[rowCount + 1][i];
+				min = abs(table[rowCount + 1][i]);
 				minID = i;
 			}
 		}
+
 		colAdmin = minID;
 		//cout << "rowA = " << rowAdmin << " colA = " << colAdmin << "\n";
 		if (colAdmin == -1)
@@ -161,7 +234,7 @@ public:
 			COinvalid = true;
 			return false;
 		}
-			
+
 		admin = table[rowAdmin][colAdmin];
 
 		return true;
@@ -178,6 +251,12 @@ public:
 
 	void calculateTable()
 	{
+		if ((isOptimal() && z_isGood()) || COinvalid == true) 
+		{
+			solutionCompleted = true;
+			return;
+		}
+
 		vector < vector < Rational >> newtable = table;
 
 		basisId[rowAdmin] = colAdmin - 1;
@@ -200,6 +279,15 @@ public:
 		if (isOptimal())
 			for (auto& i : table[rowCount + 1])
 				i = 0;
+
+
+		if ((isOptimal() && z_isGood()) || COinvalid == true)
+		{
+			solutionCompleted = true;
+			return;
+		}
+
+
 	}
 
 

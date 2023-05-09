@@ -4,8 +4,9 @@
 #include <iostream>
 #include <vector>
 #include <iomanip>
-
+#include <algorithm>
 #include <sstream>
+#include <numeric>
 
 using namespace std;
 class Rational
@@ -35,6 +36,8 @@ public:
 	Rational operator/= (Rational);
 	Rational operator= (Rational);
 	Rational operator= (double);
+
+	int gcd(long long a, long long b);
 
 	operator double()
 	{

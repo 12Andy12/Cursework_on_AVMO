@@ -86,7 +86,10 @@ ostream& operator<< (ostream& out, Rational s)
 {
 	if (s.b == 1 || s.a == 0)
 		return out << s.a;
-	return out << s.a << "/" << s.b;
+	std::stringstream ss;
+	ss << std::setprecision(15) << s.a << "/" <<s.b;
+	std::string str = ss.str();
+	return out << str;
 }
 
 istream& operator>> (istream& out, Rational& s)
@@ -125,7 +128,7 @@ ostream& operator<< (ostream& out, vector<vector<T>> v)
 {
 	for (auto i : v) {
 		for (auto j : i)
-			out << setw(3) << j << ' ';
+			out << setw(10) << j << ' ';
 		out << '\n';
 	}
 	return out;
@@ -137,46 +140,53 @@ template <typename T>
 ostream& operator<< (ostream& out, vector<T> v)
 {
 	for (auto i : v)
-		out << setw(3) << i << ' ';
+		out << setw(10) << i << ' ';
 	return out;
 }
 
 ostream& operator<< (ostream& out, simplexTable t)
 {
+	if (t.turnToOtherSimplex)
+		out << setw(10) << "OtherSimplex\n";
+
 	SetConsoleTextAttribute(h, 4);
-	out << "\n      1";
+	out << "\n                    1";
 
 	for (int i = 0; i < t.colCount - 1; ++i)
-		out << setw(3) << "x" << i + 1;
+		out << setw(10) << "x" << i + 1;
+
+	if(t.turnToOtherSimplex)
+		out << setw(11) << "CO";
 
 	SetConsoleTextAttribute(h, 15);
 	out << "\n";
 	for (int i = 0; i < t.table.size(); ++i) {
 		SetConsoleTextAttribute(h, 4);
 		if (i < t.rowCount)
-			out << setw(3) << "x" << t.basisId[i] + 1;
+			out << setw(10) << "x" << t.basisId[i] + 1;
 		else if (i == t.rowCount)
-			out << "   Z";
-		else
-			out << "  CO";
+			out << "          Z";
+		else if (!t.turnToOtherSimplex)
+			out << "         CO";
 
 		SetConsoleTextAttribute(h, 15);
 
-		for (int j = 0; j < t.colCount; ++j)
+		for (int j = 0; j < t.table[i].size(); ++j)
 		{
-			if (i == t.rowCount + 1 && t.table[i][j] == 0)
+			if ((i == t.rowCount + 1 && t.table[i][j] == 0) || ( j == t.colCount && t.table[i][j] == 0))
 				SetConsoleTextAttribute(h, 0);
 			else
 				SetConsoleTextAttribute(h, 15);
 
-			out << setw(3) << t.table[i][j] << ' ';
+			out << setw(10) << t.table[i][j] << ' ';
 		}
 
 		out << '\n';
 	}
 	SetConsoleTextAttribute(h, 15);
 	
-	//out << "Admin = " << t.admin << "\n";
+	out << "Admin = " << t.admin << "\n";
+	out << t.rowAdmin << " " << t.colAdmin << "\n";
 
 	if (t.COinvalid)
 	{
@@ -184,13 +194,12 @@ ostream& operator<< (ostream& out, simplexTable t)
 		out << "CO is dead\n";
 	}
 
-	if (!t.z_isGood())
+	if (t.isOptimal() && !t.z_isGood())
 	{
 		SetConsoleTextAttribute(h, 3);
-		out << "\nHaven`t solution\n";
+		out << "\nSolution isn`t optimal, but poesh gavna\n";
 	}
-
-	if (!t.isOptimal())
+	else if (!t.isOptimal())
 	{
 		SetConsoleTextAttribute(h, 3);
 		out << "\nSolution isn`t optimal\n";
@@ -205,7 +214,7 @@ ostream& operator<< (ostream& out, simplexTable t)
 	}
 
 	SetConsoleTextAttribute(h, 15);
-	//out << t.rowAdmin << " " << t.colAdmin << "\n";
+	
 	return out;
 }
 
@@ -214,19 +223,22 @@ ostream& operator<< (ostream& out, simplexTable t)
 int main()
 {
 
-	simplexTable tab("3.txt");
+	simplexTable tab("1.txt");
 	tab.findBasis();
 	tab.initTable();
 	tab.initAdmin();
-	if (tab.COinvalid)
-		return 0;
+	cout << "\nbaza:\n" << tab;
 	do {
-		cout << tab;
 		tab.calculateTable();
-	} while (!tab.isOptimal() && tab.z_isGood() && tab.initAdmin());
+		cout << "\ncalculate:\n" << tab;
+		tab.initAdmin();
+		cout <<"\ninit Admin:\n" << tab;
+	} while (!tab.solutionCompleted);
 	
-	cout << tab;
 
+	cout << "\nResult:\n" << tab;
+
+	
 
 	/*while (!tab.isOptimal())
 	{

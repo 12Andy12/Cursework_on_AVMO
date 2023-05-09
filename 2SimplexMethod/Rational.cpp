@@ -14,7 +14,7 @@ Rational Rational::operator- (Rational s)
 	Rational r;
 	r.a = a * s.b - b * s.a;
 	r.b = b * s.b;
-	long long c = Nod(r.b, r.a);
+	long long c = gcd(r.b, r.a);
 	r.a = r.a / c;
 	r.b = r.b / c;
 	return r;
@@ -25,7 +25,7 @@ Rational Rational::operator+ (Rational s)
 	Rational r;
 	r.a = a * s.b + b * s.a;
 	r.b = b * s.b;
-	int c = Nod(r.b, r.a);
+	int c = gcd(r.b, r.a);
 	r.a = r.a / c;
 	r.b = r.b / c;
 	return r;
@@ -36,7 +36,7 @@ Rational Rational::operator+= (Rational s)
 	Rational r;
 	r.a = a * s.b + b * s.a;
 	r.b = b * s.b;
-	int c = Nod(r.b, r.a);
+	int c = gcd(r.b, r.a);
 	r.a = r.a / c;
 	r.b = r.b / c;
 	a = r.a;
@@ -54,7 +54,7 @@ Rational Rational::operator/ (Rational s)
 		cout << "nelzia delit na Zero" << endl;
 		exit(1);
 	}
-	long long c = Nod(r.b, r.a);
+	long long c = gcd(r.b, r.a);
 	r.a = r.a / c;
 	r.b = r.b / c;
 	return r;
@@ -70,7 +70,7 @@ Rational Rational::operator/= (Rational s)
 		cout << "nelzia delit na Zero" << endl;
 		exit(1);
 	}
-	long long c = Nod(r.b, r.a);
+	long long c = gcd(r.b, r.a);
 	r.a = r.a / c;
 	r.b = r.b / c;
 	a = r.a;
@@ -82,7 +82,7 @@ Rational Rational::operator* (int s)
 	Rational r;
 	r.a = a * s;
 	r.b = b;
-	long long c = Nod(r.b, r.a);
+	long long c = gcd(r.b, r.a);
 	r.a = r.a / c;
 	r.b = r.b / c;
 	return r;
@@ -93,7 +93,7 @@ Rational Rational::operator* (Rational s)
 	Rational r;
 	r.a = a * s.a;
 	r.b = b * s.b;
-	long long c = Nod(r.b, r.a);
+	long long c = gcd(r.b, r.a);
 	r.a = r.a / c;
 	r.b = r.b / c;
 	return r;
@@ -162,5 +162,16 @@ long long Rational::Nod(long long a, long long b)
 		return Nod(abs(a % b), abs(b));
 	else
 		return Nod(abs(a), abs(b % a));
+}
+
+
+
+
+int Rational::gcd(long long a, long long b) 
+{ 
+	while (b %= a) 
+		swap(a, b);
+
+	return a; 
 }
 
